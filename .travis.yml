@@ -8,7 +8,7 @@ before_install:
 
 #  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
   - sudo apt-get update -qq
-  - sudo apt-get install -qq r-base latex-mk
+  - sudo apt-get install -qq r-base latex-mk texlive-latex-extra texlive-fonts-recommended
   - (cd scripts && sudo Rscript libraries.R)
 
 script:
