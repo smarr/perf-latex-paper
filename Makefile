@@ -12,7 +12,12 @@ BIBTEXSRCS=references.bib
 
 CLEAN_FILES+=$(wildcard *.synctex.gz) $(wildcard *.fdb_latexmk) \
 	$(wildcard *.fls) $(KNITR_TEX)
-GV=@open -a Skim.app $(NAME).pdf
+
+ifeq ($(CI),)
+	GV=@open -a Skim.app
+else
+	GV=@ls -lah
+endif
 
 gen/%.tex: sections/%.Rnw gen scripts/*.R
 	scripts/knit.R $< $@

@@ -12,5 +12,4 @@ before_install:
   - (cd scripts && sudo Rscript libraries.R)
 
 script:
-
   - make
