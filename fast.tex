@@ -1,0 +1,87 @@
+\documentclass[10pt,natbib,numbers,preprint]{sigplanconf}
+
+\def\Title{TITLE}
+\def\Subtitle{subtitle}
+\def\PdfTitle{\Title}
+\def\PdfSubject{PDF SUBJECT}
+\def\PdfAuthors{Author Name}
+\def\PdfKeywords{Key, Word}
+
+\input{scripts/init.tex}
+
+\collabAuthor{sm}{red}{Stefan}
+
+\newcommand{\code}[1]{\texttt{#1}}
+
+\input{gen/performance.tex}
+
+\begin{document}
+
+\copyrightdata{978-1-nnnn-nnnn-n/yy/mm} 
+\copyrightdoi{nnnnnnn.nnnnnnn}
+
+\title{\Title}
+\subtitle{\Subtitle}
+
+\authorinfo{Author Name}
+           {Insti Tution}
+           {name@domain}
+
+
+\maketitle
+
+
+
+\begin{abstract}
+  Rubinius is \RBXOverJRubyX slower than JRuby.
+  MRI is \MRIOverJRubyX slower than JRuby.
+\end{abstract}
+
+\category{CR-number}{subcategory}{third-level}
+
+\terms
+term1, term2
+
+\keywords
+Key, Words
+
+\section{Introduction}
+
+\section{Performance Measurements}
+
+
+Some overview plot:
+
+\begin{figure}
+\begin{center}
+\PerfOverview
+\end{center}
+\vspace*{-5pt}
+\caption{Some overview plot}
+\label{fig:perf-overview}
+\end{figure}
+
+Some detailed plot:
+
+\begin{figure}
+\begin{center}
+\BenchmarkDetails
+\end{center}
+\vspace*{-10pt}
+\caption{Some detailed plot}
+\label{fig:benchmarks}
+\end{figure}
+
+\pagebreak
+\section{Conclusion}
+
+Rubinius is \RBXOverJRubyX slower than JRuby.
+MRI is \MRIOverJRubyX slower than JRuby.
+
+This example is based on \citet{PerfLatexPaper}'s code.
+
+\bibliographystyle{abbrvnat}
+\bibliography{references}
+
+
+\end{document}

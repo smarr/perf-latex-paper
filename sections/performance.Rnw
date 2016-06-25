@@ -1,0 +1,120 @@
+%!TEX root = ../fast.tex
+
+<<knitr-settings, echo=FALSE, include=FALSE, cache=FALSE>>=
+if (Sys.getenv("RSTUDIO") == "1") { setwd("/Users/smarr/Projects/PostDoc/FASTXX/paper-example/sections/") } else { source("../scripts/knitr-settings.R", chdir=TRUE) }
+source("../scripts/libraries.R", chdir=TRUE)
+
+vm_names <- c("JRubyJ8"               = "JRuby",
+              "MRI23"                 = "MRI",
+              "RBX314"                = "Rubinius")
+
+vms_all  <- names(vm_names)
+
+# prepare consistent coloring by VMs
+vm_colors <- brewer.pal(10, "Paired")
+names(vm_colors) <- vm_names
+
+data <- load_rebench_file("../data/benchmark.data.bz2")
+data <- droplevels(subset(data,
+                          select = c(Value, Unit, Benchmark, VM, Iteration)))
+
+data_very_slow_vms <- droplevels(subset(data, VM == "RBX314" | VM == "MRI23"))
+data_slow_vms      <- droplevels(subset(data, Iteration >= 100 & VM == "JRubyJ8"))
+
+peak <- rbind(data_slow_vms, data_very_slow_vms)
+norm <- ddply(peak, ~ Benchmark, transform,
+              ## scaling by a constant per benchmark (this is normalizing raw data)
+              RuntimeRatio = Value / mean(Value[VM == "JRubyJ8"]))
+stats <- ddply(norm, ~ VM + Benchmark, summarise,
+               RR.sd = sd(RuntimeRatio),
+               RuntimeFactor = mean(RuntimeRatio))
+
+## add additional VM stats to `stats` to use it for sorting
+stats <- ddply(stats, ~ VM, transform,
+    VMMean = geometric.mean(RuntimeFactor),
+    min = min(RuntimeFactor),
+    max = max(RuntimeFactor))
+
+norm_all <- ddply(data, ~ Benchmark, transform,
+              ## scaling by a constant per benchmark (this is normalizing raw data)
+              RuntimeRatio = Value / mean(Value[VM == "JRubyJ8"]))
+stats_all <- ddply(norm_all, ~ VM + Benchmark, summarise,
+               RR.sd = sd(RuntimeRatio),
+               RuntimeFactor = mean(RuntimeRatio))
+stats_all_vm <- ddply(stats_all, ~ VM, summarise,
+    VMMean = geometric.mean(RuntimeFactor),
+    median = median(RuntimeFactor),
+    min = min(RuntimeFactor),
+    max = max(RuntimeFactor))
+
+
+overview_box_plot <- function(stats, vms, prepare_data = NULL, pre_plot = NULL) {
+  vm_stats <- subset(stats, VM %in% vms)
+  vm_stats$VM <- revalue(vm_stats$VM, vm_names)
+  vm_stats$VM <- reorder(vm_stats$VM, X=-vm_stats$VMMean)
+  breaks <- levels(droplevels(vm_stats)$VM)
+  col_values <- sapply(breaks, function(x) vm_colors[[x]])
+
+  plot <- ggplot(vm_stats, aes(x=VM, y=RuntimeFactor, fill = VM))
+  if (!is.null(pre_plot)) {
+    plot <- pre_plot(plot)
+  }
+  plot <- plot +
+    geom_boxplot(outlier.size = 0.5) + #fill=get_color(5, 7)
+    theme_bw() + theme_simple(font_size = 8) +
+    theme(axis.text.x = element_text(angle= 90, vjust=0.5, hjust=1), legend.position="none") +
+    ggtitle("Runtime Factor, normalized to JRuby\n(lower is better)") + coord_flip() + xlab("") +
+    scale_fill_manual(values = col_values)
+  plot
+}
+
+plot_benchmarks_speedup_for_vms_faceted <- function(
+  stats, vms, ylab = "Runtime Factor, normalized to Java\n(lower is better)") {
+  vm_stats <- subset(stats, VM %in% vms)
+  vm_stats$VM <- revalue(vm_stats$VM, vm_names)
+  breaks <- levels(droplevels(vm_stats)$VM)
+  col_values <- sapply(breaks, function(x) vm_colors[[x]])
+
+  p <- ggplot(vm_stats, aes(x = VM, y = RuntimeFactor, fill = VM)) +
+      geom_bar(stat = "identity") +
+      geom_errorbar(aes(ymax = RuntimeFactor + RR.sd, ymin = RuntimeFactor - RR.sd), width=0.25) +
+      facet_wrap(~ Benchmark, ncol = 1, scales="free_y") +
+       theme_bw() + theme_simple(font_size = 8) +
+      theme(legend.position="none", axis.text.x=element_text(angle=90, hjust = 1, vjust = 0.5)) +
+    scale_fill_manual(values = col_values) +
+    ylab(ylab)
+  print(p)
+}
+
+sld_j <- function(vm) {
+  m <- subset(stats_all_vm, VM == vm)$VMMean
+  round(m, 1)
+}
+@
+
+% define some perf data numbers for use in text
+\newcommand{\RBXOverJRubyX}{\(\Sexpr{sld_j("RBX314")}\)x\xspace}
+\newcommand{\MRIOverJRubyX}{\(\Sexpr{sld_j("MRI23")}\)x\xspace}
+
+\def\PerfOverview{%
+<<perf-overview, fig.width=3.1, fig.height=1.2, cache=TRUE>>=
+p <- overview_box_plot(stats, vms_all, pre_plot = function (p) { 
+  p + geom_hline(aes(yintercept=1), colour="#cccccc", linetype="dashed") +
+      geom_hline(aes(yintercept=2), colour="#cccccc", linetype="dashed") +
+      geom_hline(aes(yintercept=3), colour="#cccccc", linetype="dashed") +
+      geom_hline(aes(yintercept=4), colour="#cccccc", linetype="dashed") })
+p + scale_y_continuous(breaks = c(1, 2, 3, 4, 6, 8, 10, 12, 14, 16))
+@
+}%
+
+\def\BenchmarkDetails{%
+<<benchmark-details, fig.width=1.5, fig.height=5.3, cache=TRUE>>=
+stats$VM <- reorder(stats$VM, X=stats$VMMean)
+plot_benchmarks_speedup_for_vms_faceted(
+  subset(stats, Benchmark %in% c("CD", "DeltaBlue", "Havlak", "Json", "Richards", "Bounce", "List")),
+  vms_all)
+plot_benchmarks_speedup_for_vms_faceted(
+  subset(stats, Benchmark %in% c("Mandelbrot", "NBody", "Permute", "Queens",  "Sieve", "Storage", "Towers")),
+  vms_all, "")
+@
+}%

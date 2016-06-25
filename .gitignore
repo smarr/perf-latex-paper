@@ -1,0 +1,6 @@
+cache
+fast.pdf
+figures
+gen
+*-tikzDictionary
+sections/*-tikzDictionary
