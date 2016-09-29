@@ -27,7 +27,7 @@ the paper from an aesthetic perspective.
  - R (r-base)
  - [LaTeX-Mk] (latex-mk)
  - Latex packages: texlive-latex-extra texlive-fonts-recommended
- - R packages: plyr, ggplot2, etc. (`sudo Rscript scripts/libraries.R`)
+ - R packages: plyr, ggplot2, etc. Can be installed with: `(cd scripts && sudo Rscript libraries.R)`
 
 
 
